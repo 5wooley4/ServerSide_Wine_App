@@ -1,4 +1,4 @@
-ServerSide_Wine_App
-===================
+Titanium_Wine_App
+=================
 
-The ServerSide Code for our wine app.
+Titanium Wine App
