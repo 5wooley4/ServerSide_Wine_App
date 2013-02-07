@@ -21,13 +21,12 @@ class Phpass
   return $hashed_password;
  }
  
- function checkpassword($raw_password,$hashed_password) 
- {
-  //Check if raw_password matches hashed_password when it is hashed using phpass
-  $hasher = new PasswordHash(PHPASS_HASH_STRENGTH, PHPASS_HASH_PORTABLE);
-  if($hasher->CheckPassword($raw_password, $hashed_password))
-   return true;
-  else return false;
- }
+  function checkpassword($raw_password,$hashed_password) 
+  {
+    //Check if raw_password matches hashed_password when it is hashed using phpass
+    $hasher = new PasswordHash(PHPASS_HASH_STRENGTH, PHPASS_HASH_PORTABLE);
+    if($hasher->CheckPassword($raw_password, $hashed_password))
+     return true;
+    else return false;
+  }
 }
-?> 

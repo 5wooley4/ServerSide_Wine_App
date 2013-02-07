@@ -14,9 +14,21 @@ class user_login_model extends CI_Model {
     
 
     function create_user($data){
-        if($this->db->insert('users', $data))
+        if($this->check_if_user_exists($data['email']))
+        {   
+            $this->db->insert('users', $data);
+            $this->db->insert('user_profile', array('email'=>$data['email']));
             return true;
-        return false;
+        }
+        return "Email is already in use.";
+
+    }
+    function check_if_user_exists($email){
+        $this->db->where('email', $email);
+        $this->db->from('users');
+        if($this->db->count_all_results() > 0)
+            return false;
+        return true;
 
     }
 
@@ -25,8 +37,15 @@ class user_login_model extends CI_Model {
         $this->db->select('password');
         $q = $this->db->get_where('users', array('email'=>$email), 1);
         foreach($q->result() as $r){
-            print_r($r);
             return $r->password;
+        }
+    }
+
+    function get_user_info($email)
+    {
+        $q = $this->db->get_where('user_profile', array('email'=>$email), 1);
+        foreach($q->result() as $r){
+            return (array) $r;
         }
     }
 
