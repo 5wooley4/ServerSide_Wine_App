@@ -1,0 +1,146 @@
+[Status]
+(
+    [Messages] => Array
+        (
+        )
+
+    [ReturnCode] => 0
+)
+[Products] => stdClass Object
+(
+    [List] => Array
+        (
+            [0] => stdClass Object
+                (
+                    [Id] => 98841
+                    [Name] => Goldeneye Gowan Creek Vineyard Pinot Noir 2006
+                    [Url] => http://www.wine.com/V6/Goldeneye-Gowan-Creek-Vineyard-Pinot-Noir-2006/wine/98841/detail.aspx
+                    [Appellation] => stdClass Object
+                        (
+                            [Id] => 2416
+                            [Name] => North Coast
+                            [Url] => http://www.wine.com/v6/North-Coast/wine/list.aspx?N=7155+101+2416
+                            [Region] => stdClass Object
+                                (
+                                    [Id] => 101
+                                    [Name] => California
+                                    [Url] => http://www.wine.com/v6/California/wine/list.aspx?N=7155+101
+                                    [Area] => 
+                                )
+
+                        )
+
+                    [Labels] => Array
+                        (
+                            [0] => stdClass Object
+                                (
+                                    [Id] => 98841m
+                                    [Name] => thumbnail
+                                    [Url] => http://cache.wine.com/labels/98841m.jpg
+                                )
+
+                        )
+
+                    [Type] => Wine
+                    [Varietal] => stdClass Object
+                        (
+                            [Id] => 143
+                            [Name] => Pinot Noir
+                            [Url] => http://www.wine.com/v6/Pinot-Noir/wine/list.aspx?N=7155+124+143
+                            [WineType] => stdClass Object
+                                (
+                                    [Id] => 124
+                                    [Name] => Red Wines
+                                    [Url] => http://www.wine.com/v6/Red-Wines/wine/list.aspx?N=7155+124
+                                )
+
+                        )
+
+                    [Vineyard] => stdClass Object
+                        (
+                            [Id] => 6436
+                            [Name] => Goldeneye
+                            [Url] => http://www.wine.com/v6/Goldeneye/learnabout.aspx?winery=3787
+                            [ImageUrl] => http://cache.wine.com/aboutwine/basics/images/winerypics/3787.jpg
+                            [GeoLocation] => stdClass Object
+                                (
+                                    [Latitude] => -360
+                                    [Longitude] => -360
+                                    [Url] => http://www.wine.com/v6/aboutwine/mapof.aspx?winery=3787
+                                )
+
+                        )
+
+                    [Vintage] => 
+                    [Community] => stdClass Object
+                        (
+                            [Reviews] => stdClass Object
+                                (
+                                    [HighestScore] => 0
+                                    [List] => Array
+                                        (
+                                        )
+
+                                    [Url] => http://www.wine.com/V6/Goldeneye-Gowan-Creek-Vineyard-Pinot-Noir-2006/wine/98841/detail.aspx?pageType=reviews
+                                )
+
+                            [Url] => http://www.wine.com/V6/Goldeneye-Gowan-Creek-Vineyard-Pinot-Noir-2006/wine/98841/detail.aspx
+                        )
+
+                    [Description] => 
+                    [GeoLocation] => stdClass Object
+                        (
+                            [Latitude] => -360
+                            [Longitude] => -360
+                            [Url] => http://www.wine.com/v6/aboutwine/mapof.aspx?productId=98841
+                        )
+
+                    [PriceMax] => 74.99
+                    [PriceMin] => 74.99
+                    [PriceRetail] => 74.99
+                    [ProductAttributes] => Array
+                        (
+                            [0] => stdClass Object
+                                (
+                                    [Id] => 36
+                                    [Name] => Collectible Wines
+                                    [Url] => http://www.wine.com/v6/Collectible-Wines/wine/list.aspx?N=7155+36
+                                    [ImageUrl] => http://cache.wine.com/images/glo_icon_collectable_big.gif
+                                )
+
+                            [1] => stdClass Object
+                                (
+                                    [Id] => 506
+                                    [Name] => Boutique Wines
+                                    [Url] => http://www.wine.com/v6/Boutique-Wines/wine/list.aspx?N=7155+506
+                                    [ImageUrl] => http://cache.wine.com/images/glo_icon_boutique_big.gif
+                                )
+
+                        )
+
+                    [Ratings] => stdClass Object
+                        (
+                            [HighestScore] => 94
+                            [List] => Array
+                                (
+                                )
+
+                        )
+
+                    [Retail] => 
+                    [Vintages] => stdClass Object
+                        (
+                            [List] => Array
+                                (
+                                )
+
+                        )
+
+                )
+
+        )
+
+    [Offset] => 0
+    [Total] => 170
+    [Url] => 
+)

@@ -23,25 +23,26 @@ class user_login_model extends CI_Model {
         return "Email is already in use.";
 
     }
+
     function check_if_user_exists($email){
         $this->db->where('email', $email);
         $this->db->from('users');
         if($this->db->count_all_results() > 0)
             return false;
         return true;
-
     }
 
     function get_password_hash($email)
     {
         $this->db->select('password');
         $q = $this->db->get_where('users', array('email'=>$email), 1);
-        foreach($q->result() as $r){
+        foreach($q->result() as $r)
+        {
             return $r->password;
         }
     }
 
-    function get_user_info($email)
+    function get_profile($email)
     {
         $q = $this->db->get_where('user_profile', array('email'=>$email), 1);
         foreach($q->result() as $r){
@@ -49,29 +50,9 @@ class user_login_model extends CI_Model {
         }
     }
 
-    function get_last_ten_entries()
-    {
-        $query = $this->db->get('entries', 10);
-        return $query->result();
+    function update_profile($email, $data){
+        $q = $this->db->update('user_profile', $data, array('email'=>$email), 1);
+        //print_r($q);
     }
-
-    function insert_entry()
-    {
-        $this->title   = $_POST['title']; // please read the below note
-        $this->content = $_POST['content'];
-        $this->date    = time();
-
-        $this->db->insert('entries', $this);
-    }
-
-    function update_entry()
-    {
-        $this->title   = $_POST['title'];
-        $this->content = $_POST['content'];
-        $this->date    = time();
-
-        $this->db->update('entries', $this, array('id' => $_POST['id']));
-    }
-
 }
 
