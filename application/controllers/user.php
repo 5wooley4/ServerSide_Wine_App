@@ -28,6 +28,26 @@ class User extends CI_Controller {
       redirect('/user/login/');
     }
 
+    public function befriend(){
+      $fr_email = $this->input->post('fr_email');
+      if(strlen($fr_email) < 1){
+        echo "<form method='POST'><input type='text' name='fr_email' /><br /> <input type='submit' /></form>";
+        return;
+      }
+      //$user_id = $this->user_login_model->id_from_email($this->session->userdata('email'));
+      $fr_id = $this->user_login_model->id_from_email($fr_email);
+      echo json_encode($this->user_login_model->befriend($this->session->userdata('user_id'), $fr_id));
+      /*if($this->user_login_model->befriend($this->session->userdata('user_id'), $fr_id))
+        echo json_encode(array("success"=>true));
+      else
+        echo json_encode(array("success"=>false, "error"=>"You are probably already friends"));*/
+    }
+
+    public function friendlist(){
+      $friends = $this->user_login_model->all_my_friends($this->session->userdata('user_id'));
+      echo json_encode($friends);
+    }
+
     public function login($email=False, $password=False){
       // Make sure the user is not already logged in.
       if($this->check_login(false))
@@ -58,8 +78,8 @@ class User extends CI_Controller {
         if ($this->phpass->checkpassword($password, $users_password))
         {
             $response['user_info'] = $this->user_login_model->get_profile($email);
-
-            $this->session->set_userdata(array('logged_in'=>true, 'email'=>$email));
+            $id = $this->user_login_model->id_from_email($email);
+            $this->session->set_userdata(array('logged_in'=>true, 'email'=>$email, 'user_id' => $id));
 
             $response['success'] = true;
 
