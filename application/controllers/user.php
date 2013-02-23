@@ -28,19 +28,35 @@ class User extends CI_Controller {
       redirect('/user/login/');
     }
 
+    function checkin(){
+      $this->check_login();
+      $wine_id = $this->input->post('wine_id');
+      if(strlen($wine_id) < 1)
+      {
+        ?>
+          <form method='POST'>
+            Wine Id: <input type='text' name='wine_id' /><br />
+            Comment: <input type='text' name='comment' /><br />
+            rating: <input type='text' name='rating' /><br />
+            <input type='submit' />
+          </form>
+        <?php
+        return;
+      }
+      $user_id = $this->session->userdata('user_id');
+      $comment = $this->input->post('comment');
+      $rating = $this->input->post('rating');
+      echo json_encode($this->user_login_model->checkin($wine_id, $user_id, $comment, $rating));
+    }
+
     public function befriend(){
       $fr_email = $this->input->post('fr_email');
       if(strlen($fr_email) < 1){
         echo "<form method='POST'><input type='text' name='fr_email' /><br /> <input type='submit' /></form>";
         return;
       }
-      //$user_id = $this->user_login_model->id_from_email($this->session->userdata('email'));
       $fr_id = $this->user_login_model->id_from_email($fr_email);
       echo json_encode($this->user_login_model->befriend($this->session->userdata('user_id'), $fr_id));
-      /*if($this->user_login_model->befriend($this->session->userdata('user_id'), $fr_id))
-        echo json_encode(array("success"=>true));
-      else
-        echo json_encode(array("success"=>false, "error"=>"You are probably already friends"));*/
     }
 
     public function friendlist(){

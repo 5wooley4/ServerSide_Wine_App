@@ -15,24 +15,44 @@ class user_login_model extends CI_Model {
     function befriend($user_id, $fr_id){
         if(!$fr_id)
             return array('error'=>"Friend does not exist", 'success'=>false);
-        //echo "$user_id - $fr_id<br />"; 
-       // $this->db->where(array('user'=>$user_id, 'friend'=>$fr_id));
         $this->db->where('user', $user_id);
         $this->db->where('friend', $fr_id);
         $this->db->from('friends');
         $count = $this->db->count_all_results();
-        //echo $count."<br />";
         if($count < 1)
         {
-            //echo "Befriending user";
             $this->db->set('user', $user_id);
             $this->db->set('friend', $fr_id);
             $this->db->insert('friends');
             return array('success'=>true);
         }
-        //echo $count;
         return array('error'=>"You are already friends", 'success'=>false);
-        //echo "FUCK YOU NO!";
+    }
+
+    function checkin($wine_id, $user_id, $comment, $rating){
+        $this->db->where('User_id', $user_id);
+        $this->db->where('Wine_id', $wine_id);
+        $this->db->from('checkins');
+        $count = $this->db->count_all_results();
+        if($count > 0)
+            return array('success'=>false, "error"=>"You have already checked into this wine");
+
+        if(!$wine_id || !$user_id)
+            return array('success'=>false, "error"=>"User id and Wine id are required");
+
+        $this->db->set('User_id', $user_id);
+        $this->db->set('Wine_id', $wine_id);
+        $this->db->set('comment', $comment);
+        $this->db->set('rating', $rating);
+        if($rating > 5)
+            $rating = 5;
+        try{
+            $this->db->insert('checkins');
+            return array('success'=>true);
+        }
+        catch(Exception $e){
+            return array('success'=>false, "error"=>"checkin error: " . e);
+        }
     }
 
     function all_my_friends($user_id){

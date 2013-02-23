@@ -85,15 +85,15 @@ class Search extends CI_Controller {
       // catagories builder
       $cat = $this->input->post('cat');
       if(strlen($query) > 0){
-        $filter = "&filter=categories($cat)";
+        $params .= "&filter=categories($cat)";
       }
 
       // ratings paramater
       $rat = $this->input->post('rat');
-      if(strlen($query) > 0){
-        if(strlen($filter) > 0)
-          $filter .= "+";
-        $filter .= "rating($rat)";
+      if(strlen($rat) > 0){
+        if(strlen($params) > 0)
+          $params .= "+";
+        $params .= "rating($rat)";
       }
 
       // size paramater
@@ -102,9 +102,9 @@ class Search extends CI_Controller {
         $params .= "&size=$size";
       }
       else
-        $params .= "&size=10";
+        $params .= "&size=1";
 
-
+      //echo $params."<hr />";
       $cache = $this->search_model->get_cache($params);
       if($cache != false){
         echo $cache;
@@ -115,7 +115,7 @@ class Search extends CI_Controller {
       $result = file_get_contents($url);
 
       $this->search_model->add_to_cache($params, $result);
-
+      //$result['params'] = $params;
       echo $result;
     }
 }
