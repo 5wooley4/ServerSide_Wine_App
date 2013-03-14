@@ -11,7 +11,8 @@ class user_login_model extends CI_Model {
         // Call the Model constructor
         parent::__construct();
     }
-    
+
+
     function befriend($user_id, $fr_id){
         if(!$fr_id)
             return array('error'=>"Friend does not exist", 'success'=>false);
@@ -29,14 +30,39 @@ class user_login_model extends CI_Model {
         return array('error'=>"You are already friends", 'success'=>false);
     }
 
+    function get_facebook_users($user_id, $friends){
+        echo $user_id . " - ";
+        echo json_encode($friends);
+        //$this->db->where('user_id', $user_id);
+        $this->db->where_in('fb_id', $friends);
+        $this->db->from('fb_integration');
+        $res = $this->db->get();
+        return $res->result();
+
+    }
+
+    function integrate($user_id, $fb_id)
+    {
+        try{
+                $this->db->set('user_id', $user_id);
+                $this->db->set('fb_id', $fb_id);
+                $this->db->insert('fb_integration');
+                return array('success' => true);
+        }
+        catch(Exception $e){
+            return array('success'=>false, "error"=>"checkin error: " . e);
+        }
+        
+    }
+
     function checkin($wine_id, $user_id, $comment, $rating){
-        $this->db->where('User_id', $user_id);
+       /* $this->db->where('User_id', $user_id);
         $this->db->where('Wine_id', $wine_id);
         $this->db->from('checkins');
         $count = $this->db->count_all_results();
         if($count > 0)
             return array('success'=>false, "error"=>"You have already checked into this wine");
-
+        */
         if(!$wine_id || !$user_id)
             return array('success'=>false, "error"=>"User id and Wine id are required");
 

@@ -16,6 +16,40 @@ class User extends CI_Controller {
       $result = $this->search_model->get_cache("&search=merlot&size=10");
       echo $result;
     }
+    public function recent_checkins(){
+      echo $this->user_login_model->recent_wines($this->session->userdata('user_id'));
+
+    }
+    public function fb_friends(){
+      $friends = $this->input->post('friends');
+      
+
+      if(strlen($friends) > 0){ 
+        $f = array();
+        $friends = json_decode($friends);
+        foreach ($friends as $friend) {
+          $f[] = $friend->id;
+        }
+        $friends = $this->user_login_model->get_facebook_users($this->session->userdata('user_id'), $f);
+        foreach ($friends as $f) {
+          $this->user_login_model->befriend($this->session->userdata('user_id'), $f->user_id);
+        }
+        echo json_encode($friends);
+      }
+      else
+        echo json_encode(array('error'=>"Facebook friends are required"));
+    }
+
+    public function fb_integrate(){
+      $this->check_login();
+      $fb_id = $this->input->post('fb_id');
+
+      if(strlen($fb_id) > 0)
+        echo json_encode($this->user_login_model->integrate($this->session->userdata('user_id'), $fb_id));
+      else
+        //echo json_encode(array('error'=>"Facebook id is required"));
+        echo "<form method='post' ><input type='text' name='fb_id' /><input type='submit' /></form>";
+    }
 
     function chlogin(){
         echo json_encode(
@@ -25,7 +59,8 @@ class User extends CI_Controller {
 
     function logout(){
       $this->execute_logout();
-      redirect('/user/login/');
+      return array('success'=>true);
+      //redirect('/user/login/');
     }
 
     function checkin(){

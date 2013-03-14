@@ -45,6 +45,10 @@ class Search extends CI_Controller {
 
     }
 
+    public function recent_checkins(){
+      echo $this->search_model->recent_wines($this->session->userdata('user_id'));
+
+    }
 
     /**
      * Search for wines
@@ -77,19 +81,19 @@ class Search extends CI_Controller {
       $params = "";
 
       // Search builder
-      $query = $this->input->post('query');
+      $query = str_replace(" ", "+", $this->input->post('query'));
       if(strlen($query) > 0){
         $params .= "&search=$query";
       }
       
       // catagories builder
-      $cat = $this->input->post('cat');
+      $cat = str_replace(" ", "+", $this->input->post('cat'));
       if(strlen($query) > 0){
         $params .= "&filter=categories($cat)";
       }
 
       // ratings paramater
-      $rat = $this->input->post('rat');
+      $rat = str_replace(" ", "+", $this->input->post('rat'));
       if(strlen($rat) > 0){
         if(strlen($params) > 0)
           $params .= "+";
@@ -110,7 +114,7 @@ class Search extends CI_Controller {
         echo $cache;
         return;
       }
-      $url = "http://services.wine.com/api/beta2/service.svc/json/catalog?apikey=5e8a37f198ead9d9d7ea5521a2e6bdeb&state=california$params";
+      $url = "http://services.wine.com/api/beta2/service.svc/json/catalog?apikey=5e8a37f198ead9d9d7ea5521a2e6bdeb$params";
 
       $result = file_get_contents($url);
 
