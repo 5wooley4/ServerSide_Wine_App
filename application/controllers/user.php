@@ -1,6 +1,7 @@
 <?php if ( ! defined('BASEPATH')) exit('No direct script access allowed');
 
 class User extends CI_Controller {
+
     public function __construct() {
         parent::__construct();
         $this->load->library('phpass');
@@ -9,6 +10,16 @@ class User extends CI_Controller {
         $response['error'] = false;
     }
 
+
+    public function test(){
+      $res = '{"Status":{"Messages":[],"ReturnCode":0},"Products":{"List":[{"Id":120588,"Name":"Mount Veeder Winery Cabernet Sauvignon 2010","Url":"http:\/\/www.wine.com\/V6\/Mount-Veeder-Winery-Cabernet-Sauvignon-2010\/wine\/120588\/detail.aspx","Appellation":{"Id":2398,"Name":"Napa Valley","Url":"http:\/\/www.wine.com\/v6\/Napa-Valley\/wine\/list.aspx?N=7155+101+2398","Region":{"Id":101,"Name":"California","Url":"http:\/\/www.wine.com\/v6\/California\/wine\/list.aspx?N=7155+101","Area":null}},"Labels":[{"Id":"120588m","Name":"thumbnail","Url":"http:\/\/cache.wine.com\/labels\/120588m.jpg"}],"Type":"Wine","Varietal":{"Id":139,"Name":"Cabernet Sauvignon","Url":"http:\/\/www.wine.com\/v6\/Cabernet-Sauvignon\/wine\/list.aspx?N=7155+124+139","WineType":{"Id":124,"Name":"Red Wines","Url":"http:\/\/www.wine.com\/v6\/Red-Wines\/wine\/list.aspx?N=7155+124"}},"Vineyard":{"Id":999999037,"Name":"Mount Veeder Winery","Url":"http:\/\/www.wine.com\/v6\/Mount-Veeder-Winery\/learnabout.aspx?winery=157","ImageUrl":"http:\/\/cache.wine.com\/aboutwine\/basics\/images\/winerypics\/157.jpg","GeoLocation":{"Latitude":-360,"Longitude":-360,"Url":"http:\/\/www.wine.com\/v6\/aboutwine\/mapof.aspx?winery=157"}},"Vintage":"","Community":{"Reviews":{"HighestScore":5,"List":[],"Url":"http:\/\/www.wine.com\/V6\/Mount-Veeder-Winery-Cabernet-Sauvignon-2010\/wine\/120588\/detail.aspx?pageType=reviews"},"Url":"http:\/\/www.wine.com\/V6\/Mount-Veeder-Winery-Cabernet-Sauvignon-2010\/wine\/120588\/detail.aspx"},"Description":"","GeoLocation":{"Latitude":-360,"Longitude":-360,"Url":"http:\/\/www.wine.com\/v6\/aboutwine\/mapof.aspx?winery=157"},"PriceMax":39.9900,"PriceMin":24.9900,"PriceRetail":40.0000,"ProductAttributes":[{"Id":613,"Name":"Big &amp; Bold","Url":"http:\/\/www.wine.com\/v6\/Big-andamp-Bold\/wine\/list.aspx?N=7155+613","ImageUrl":""},{"Id":15419,"Name":"Great Bottles to Give","Url":"http:\/\/www.wine.com\/v6\/Great-Bottles-to-Give\/gift\/list.aspx?N=7151+15419","ImageUrl":"http:\/\/cache.wine.com\/images\/glo_icon_gift_big.gif"}],"Ratings":{"HighestScore":0,"List":[]},"Retail":null,"Vintages":{"List":[]}}],"Offset":0,"Total":63002,"Url":""}}';
+      echo "<textarea>$res</textarea><hr />";
+      $res = json_decode($res);
+
+      echo "<textarea>".json_encode($res->Products)."</textarea><hr />";
+
+
+    }
     public function index()
     {
       $this->check_login();
@@ -18,7 +29,6 @@ class User extends CI_Controller {
     }
     public function recent_checkins(){
       echo $this->user_login_model->recent_wines($this->session->userdata('user_id'));
-
     }
     public function fb_friends(){
       $friends = $this->input->post('friends');
@@ -199,14 +209,77 @@ class User extends CI_Controller {
       $this->check_login();
       $this->output->set_content_type('application/json');
       $profile = $this->user_login_model->get_profile($this->session->userdata('email'));
+      $profile["following"] = $this->user_login_model->following_count($this->session->userdata('user_id'));
+      $profile["follower"] = $this->user_login_model->follower_count($this->session->userdata('user_id'));
+      $profile["chcount"] = $this->user_login_model->ch_count($this->session->userdata('user_id'));
+
       echo json_encode($profile);
     }
 
 
+    function upload($type="profile"){
+      $p = 'uploads/'.$this->session->userdata('user_id')."/";
+      $upath = base_url().$p;
+      $path = "./".$p;
+
+      if(!is_dir($path))
+        mkdir($path, 0777);
+
+      $path = $path.$type."/";
+      $upath = $upath.$type."/";
+      if(!is_dir($path))
+        mkdir($path, 0777);
+      $config['upload_path'] = $path;
+      $config['allowed_types'] = 'gif|jpg|png|jpeg';
+      $config['max_size'] = '50000';
+      //$config['encrypt_name'] = true;
+      $config['remove_spaces'] = true;
+      $config['max_width']  = 0;
+      $config['max_height']  = 0;
+
+      $this->load->library('upload', $config);
 
 
 
+      if ( ! $this->upload->do_upload('profile_image'))
+      {
+        $error = $this->upload->display_errors();
 
+        //$this->load->view('upload_form', $error);
+        echo json_encode(array('success' =>  false, 'error'=>strip_tags($error)));
+      }
+      else
+      {
+        $data = $this->upload->data();
+        $thumb = $this->create_thumbnail($path.$data['file_name']);
+        if($type == 'profile')
+          $this->user_login_model->update_user_image($this->session->userdata('user_id'), $upath.$thumb);
+        echo json_encode(array('success' =>  true));
+      }
+      
+
+    }
+
+
+    private function create_thumbnail($image){
+      $config['image_library'] = 'gd2';
+      $config['source_image'] = $image;
+      $config['create_thumb'] = TRUE;
+      $config['maintain_ratio'] = TRUE;
+      $config['width']   = 150;
+      $config['height'] = 100;
+
+      $this->load->library('image_lib', $config); 
+
+      $this->image_lib->resize();
+      $img = explode(".", $image);
+      $n = count ($img);
+
+      $image = str_replace(".".$img[$n-1], "_thumb.".$img[$n-1], $image);
+
+      $img = explode("/", $image);
+      return $img[count($img)-1];
+    }
 
 
     /**

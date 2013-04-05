@@ -10,6 +10,37 @@ class Search extends CI_Controller {
         parent::__construct();
         $this->load->library('phpass');
         $this->load->model('search_model');
+        $this->load->model('user_login_model');
+        $ctx=stream_context_create(array('http'=>
+          array(
+              'timeout' => 5
+          )
+      ));
+    }
+
+    public function wine_checkins(){
+      $wine_id = $this->input->post('wine_id');
+      if(strlen($wine_id) < 1){
+        echo "<form method=POST><input type='text' name='wine_id'/><input type='submit'/></form>";
+        return;
+      }
+      $user_id = $this->input->post('user_id');
+      //if(strlen($user_id) < 1)
+        $user_id = $this->session->userdata('user_id');
+      $res = $this->search_model->wine_checkins($user_id, $wine_id);
+
+      foreach ($res as $wine) {
+        $wine->friend = $this->user_login_model->user_profile_by_id($wine->friend);
+        $wine->date = date("F j, Y, g:i a", strtotime($wine->date));
+      }
+      echo json_encode($res);
+
+    }
+
+    public function friends_checkins(){
+      $c = (object) array("Products"=>(object) Array("List"=>Array()));
+      $c->Products->List = $this->search_model->friends_wines($this->session->userdata('user_id'));
+      echo json_encode($c);
     }
     /**
      * Get a wine by it's id
@@ -34,22 +65,26 @@ class Search extends CI_Controller {
         return;
       }
 
-      $result = file_get_contents("http://services.wine.com/api/beta2/service.svc/json/catalog?apikey=5e8a37f198ead9d9d7ea5521a2e6bdeb&state=california&filter=product($wine_id)");
-      $result = json_decode($result);
-      $result = json_encode($result->Products->List[0]);
-
-
-      $this->search_model->add_wine_to_cache($wine_id, $result);
-
-      echo $result;
-
+      $result = file_get_contents("http://services.wine.com/api/beta2/service.svc/json/catalog?apikey=5e8a37f198ead9d9d7ea5521a2e6bdeb&state=california&filter=product($wine_id)", false, $ctx);
+      if($result){
+        $this->search_model->add_wine_to_cache($wine_id, $result);
+        echo $result;
+      }
+      else
+        echo json_decode(Array("success"=>false, "error"=>"Wine.com is not available, please try again"));
     }
-
     public function recent_checkins(){
-      echo $this->search_model->recent_wines($this->session->userdata('user_id'));
+      $c = (object) array("Products"=>(object) Array("List"=>Array()));
+      $c->Products->List = $this->search_model->recent_wines($this->session->userdata('user_id'));
+      echo json_encode($c);
 
     }
 
+    public function friend_recent_checkins($user_id){
+      $c = (object) array("Products"=>(object) Array("List"=>Array()));
+      $c->Products->List = $this->search_model->recent_wines($user_id);
+      echo json_encode($c);
+    }
     /**
      * Search for wines
      * @param  {POST/String} query
@@ -116,11 +151,15 @@ class Search extends CI_Controller {
       }
       $url = "http://services.wine.com/api/beta2/service.svc/json/catalog?apikey=5e8a37f198ead9d9d7ea5521a2e6bdeb$params";
 
-      $result = file_get_contents($url);
-
-      $this->search_model->add_to_cache($params, $result);
-      //$result['params'] = $params;
-      echo $result;
+      $result = file_get_contents($url, false, $ctx);
+      if($result)
+      {
+        $this->search_model->add_to_cache($params, $result);
+        //$result['params'] = $params;
+        echo $result;
+      }
+      else
+        echo json_decode(Array("success"=>false, "error"=>"Wine.com is not available, please try again"));
     }
 }
 

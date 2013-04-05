@@ -40,7 +40,34 @@ class user_login_model extends CI_Model {
         return $res->result();
 
     }
-
+    function update_user_image($user_id, $url){
+        $data = array("picture_url"=>$url);
+        $q = $this->db->update('user_profile', $data, array('id'=>$user_id), 1);
+    }
+    function follower_count($user_id){
+        $this->db->select('*')
+            ->from('friends')
+            ->where('friend', $user_id);
+            //->get();
+            //echo $this->db->last_query();
+        return $this->db->count_all_results();
+    }
+    function following_count($user_id){
+        $this->db->select('*')
+            ->from('friends')
+            ->where('user', $user_id);
+            //->get();
+        //echo $this->db->last_query();
+        return $this->db->count_all_results();
+    }
+    function ch_count($user_id){
+        $this->db->select('*')
+            ->from('checkins')
+            ->where('user_id', $user_id);
+            //->get();
+        //echo $this->db->last_query();
+        return $this->db->count_all_results();
+    }
     function integrate($user_id, $fb_id)
     {
         try{
@@ -84,15 +111,32 @@ class user_login_model extends CI_Model {
     function all_my_friends($user_id){
         $this->db->where('user', $user_id);
         $this->db->from('friends');
-        $this->db->select('fname, lname, bio, picture_url');
+        $this->db->select('fname, lname, bio, picture_url, friend as user_id');
         $this->db->join('user_profile', "friends.friend = user_profile.ID");
         $q = $this->db->get();
-        //$i = 0;
-        //foreach ($q->result() as $v) {
-        //    echo $ret[$i] = (array) $v;
-        //}
+
+        $friends = $q->result();
+        foreach ($friends as $f) {
+            $this->db->select('*')
+            ->from('checkins')
+            ->where('user_id', $f->user_id);
+            $f->checkin_count =  $this->db->count_all_results();
+
+            $this->db->select('*')
+            ->from('friends')
+            ->where('friend', $f->user_id);
+            $f->follower_count =  $this->db->count_all_results();
+
+
+            $this->db->select('*')
+            ->from('friends')
+            ->where('user', $f->user_id);
+            $f->following_count =  $this->db->count_all_results();
+        }
         return $q->result();
     }
+
+
 
     function id_from_email($email)
     {
@@ -132,7 +176,18 @@ class user_login_model extends CI_Model {
             return $r->password;
         }
     }
-
+    function user_profile_by_id($user_id)
+    {
+        $res = $this->db
+            ->select('*')
+            ->from('user_profile')
+            ->where('id', $user_id)
+            ->get();
+        foreach($res->result() as $r)
+        {
+            return $r;
+        }
+    }
     function get_profile($email)
     {
         $q = $this->db->get_where('user_profile', array('email'=>$email), 1);
