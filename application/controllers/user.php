@@ -217,7 +217,7 @@ class User extends CI_Controller {
     }
 
 
-    function upload($type="profile"){
+    function upload($type="profile", $checkin_id = ""){
       $p = 'uploads/'.$this->session->userdata('user_id')."/";
       $upath = base_url().$p;
       $path = "./".$p;
@@ -251,31 +251,71 @@ class User extends CI_Controller {
       else
       {
         $data = $this->upload->data();
-        $thumb = $this->create_thumbnail($path.$data['file_name']);
-        if($type == 'profile')
-          $this->user_login_model->update_user_image($this->session->userdata('user_id'), $upath.$thumb);
-        echo json_encode(array('success' =>  true));
+        //$this->resize_image($path.$data['file_name'], 600);
+        //$thumb = $this->create_thumbnail($path.$data['file_name']);
+        // uploaddata contains an array of information about the file you just uploaded using
+
+        //$uploaddata = $this->upload->data();
+
+        // clear config array
+        $config = array();
+
+        // create resized image
+        $med = $this->create_thumbnail($path.$data['file_name'], "_med");
+        echo $med;
+        $config['image_library'] = 'GD2';
+        $config['source_image'] = $path.$data['file_name'];
+        $config['new_image'] = $path.$med;
+        $config['create_thumb'] = false;
+        $config['maintain_ratio'] = true;
+        $config['width'] = 600;
+        $config['height'] = 600;
+
+        $this->load->library('image_lib', $config);
+        if(!$this->image_lib->resize()){
+          echo json_encode(array('success' =>  false, "error:" => $this->image_lib->display_errors()));
+          return;
+        }
+
+        $this->image_lib->clear();
+
+        $config = array();
+        $thumb = $this->create_thumbnail($path.$data['file_name'], "_thumb");
+        // create thumb
+        $config['image_library'] = 'GD2';
+        $config['source_image'] = $path.$data['file_name'];
+        $config['new_image'] = $path.$thumb;
+        $config['create_thumb'] = true;
+        $config['maintain_ratio'] = true;
+        $config['width'] = 150;
+        $config['height'] = 50;
+
+        $this->image_lib->initialize($config);
+        if(!$this->image_lib->resize()){
+          echo json_encode(array('success' =>  false, "error:" => $this->image_lib->display_errors()));
+          return;
+        }
+        if($type == 'profile'){
+          $url = $upath.$thumb;
+          $this->user_login_model->update_user_image($this->session->userdata('user_id'), $url);
+        }
+        else{
+          $url = $upath.$med;
+          $this->user_login_model->checkin_picture($this->session->userdata('user_id'), $checkin_id, $url);
+            
+        }
+        echo json_encode(array("type" => $type, 'success' =>  true, "image_url" => $url));
       }
       
 
     }
 
 
-    private function create_thumbnail($image){
-      $config['image_library'] = 'gd2';
-      $config['source_image'] = $image;
-      $config['create_thumb'] = TRUE;
-      $config['maintain_ratio'] = TRUE;
-      $config['width']   = 150;
-      $config['height'] = 100;
-
-      $this->load->library('image_lib', $config); 
-
-      $this->image_lib->resize();
+    private function create_thumbnail($image, $ind){
       $img = explode(".", $image);
       $n = count ($img);
 
-      $image = str_replace(".".$img[$n-1], "_thumb.".$img[$n-1], $image);
+      $image = str_replace(".".$img[$n-1], $ind.".".$img[$n-1], $image);
 
       $img = explode("/", $image);
       return $img[count($img)-1];

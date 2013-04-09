@@ -48,16 +48,14 @@ class user_login_model extends CI_Model {
         $this->db->select('*')
             ->from('friends')
             ->where('friend', $user_id);
-            //->get();
-            //echo $this->db->last_query();
+
         return $this->db->count_all_results();
     }
     function following_count($user_id){
         $this->db->select('*')
             ->from('friends')
             ->where('user', $user_id);
-            //->get();
-        //echo $this->db->last_query();
+
         return $this->db->count_all_results();
     }
     function ch_count($user_id){
@@ -101,13 +99,25 @@ class user_login_model extends CI_Model {
             $rating = 5;
         try{
             $this->db->insert('checkins');
-            return array('success'=>true);
+            $id = $this->db->query("SELECT LAST_INSERT_ID() AS id")->row();
+            return array('success'=>true, 'id'=>$id->id);
         }
         catch(Exception $e){
             return array('success'=>false, "error"=>"checkin error: " . e);
         }
     }
 
+    function checkin_picture($user_id, $checkin_id, $url){
+        try{
+            $this->db->update('checkins',
+                                 array('picture_url'=>$url),
+                                 array('checkin_id'=>$checkin_id, 'User_id'=>$user_id),
+                                 1);
+            return array('success'=>true);
+        }catch(Exception $e){
+            return array('success'=>false, "error"=>"checkin error: " . e);
+        }
+    }
     function all_my_friends($user_id){
         $this->db->where('user', $user_id);
         $this->db->from('friends');

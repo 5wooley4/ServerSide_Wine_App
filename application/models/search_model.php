@@ -13,7 +13,7 @@ class search_model extends CI_Model {
 
 
 
-        $wc = $this->db->select(Array('checkins.wine_id', 'friend', 'comment', 'rating', 'date'))
+        $wc = $this->db->select(Array('checkins.wine_id', 'friend', 'comment', 'rating', 'date', 'picture_url as wine_pic'))
             ->distinct()
             ->from('checkins')
             ->join('friends', "friends.friend = checkins.user_id")
@@ -21,8 +21,6 @@ class search_model extends CI_Model {
             ->where("(checkins.user_id = friend OR checkins.user_id = $user_id)")
             ->order_by('Date', 'DESC')  
             ->get();
-       // echo $this->db->last_query();
-
 
         //$wc = $this->db->get_where('checkins', array("wine_id"=>$wine_id, "user_id"=>$user_id), 10);
         return $wc->result();
@@ -31,7 +29,7 @@ class search_model extends CI_Model {
 
     function friends_wines($user_id){
         $recent_checkins = $this->db
-            ->select(Array('checkins.wine_id', 'friend'))
+            ->select(Array('checkins.wine_id', 'friend', 'comment', 'rating', 'picture_url'))
             ->from('checkins')
             ->join('friends', "friends.friend = checkins.user_id")
             ->where("friends.user", $user_id)
@@ -41,6 +39,9 @@ class search_model extends CI_Model {
         foreach ($recent_checkins->result() as $r) {
             $w = $this->get_wine_by_id($r->wine_id);
             $w->friend = $this->user_profile_by_id($r->friend);
+            $w->friend->rating = $r->rating;
+            $w->friend->comment = $r->comment;
+            $w->friend->user_wine_url = $r->picture_url;
             $res[] = $w;
         }
         return  $res;
@@ -101,6 +102,7 @@ class search_model extends CI_Model {
     }
 
     function wine_api_query($query){
+        $ctx=stream_context_create(array('http'=>array('timeout' => 2)));
         try{
             $url = "http://services.wine.com/api/beta2/service.svc/json/catalog?apikey=5e8a37f198ead9d9d7ea5521a2e6bdeb$query";
             $res = file_get_contents($url, false, $ctx);

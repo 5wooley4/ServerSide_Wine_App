@@ -11,11 +11,7 @@ class Search extends CI_Controller {
         $this->load->library('phpass');
         $this->load->model('search_model');
         $this->load->model('user_login_model');
-        $ctx=stream_context_create(array('http'=>
-          array(
-              'timeout' => 5
-          )
-      ));
+        
     }
 
     public function wine_checkins(){
@@ -150,7 +146,11 @@ class Search extends CI_Controller {
         return;
       }
       $url = "http://services.wine.com/api/beta2/service.svc/json/catalog?apikey=5e8a37f198ead9d9d7ea5521a2e6bdeb$params";
-
+      $ctx=stream_context_create(array('http'=>
+          array(
+              'timeout' => 5
+          )
+      ));
       $result = file_get_contents($url, false, $ctx);
       if($result)
       {
