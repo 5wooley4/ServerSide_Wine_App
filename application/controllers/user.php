@@ -9,16 +9,14 @@ class User extends CI_Controller {
         $this->load->model('search_model');
         $response['error'] = false;
     }
-
-
-    public function test(){
-      $res = '{"Status":{"Messages":[],"ReturnCode":0},"Products":{"List":[{"Id":120588,"Name":"Mount Veeder Winery Cabernet Sauvignon 2010","Url":"http:\/\/www.wine.com\/V6\/Mount-Veeder-Winery-Cabernet-Sauvignon-2010\/wine\/120588\/detail.aspx","Appellation":{"Id":2398,"Name":"Napa Valley","Url":"http:\/\/www.wine.com\/v6\/Napa-Valley\/wine\/list.aspx?N=7155+101+2398","Region":{"Id":101,"Name":"California","Url":"http:\/\/www.wine.com\/v6\/California\/wine\/list.aspx?N=7155+101","Area":null}},"Labels":[{"Id":"120588m","Name":"thumbnail","Url":"http:\/\/cache.wine.com\/labels\/120588m.jpg"}],"Type":"Wine","Varietal":{"Id":139,"Name":"Cabernet Sauvignon","Url":"http:\/\/www.wine.com\/v6\/Cabernet-Sauvignon\/wine\/list.aspx?N=7155+124+139","WineType":{"Id":124,"Name":"Red Wines","Url":"http:\/\/www.wine.com\/v6\/Red-Wines\/wine\/list.aspx?N=7155+124"}},"Vineyard":{"Id":999999037,"Name":"Mount Veeder Winery","Url":"http:\/\/www.wine.com\/v6\/Mount-Veeder-Winery\/learnabout.aspx?winery=157","ImageUrl":"http:\/\/cache.wine.com\/aboutwine\/basics\/images\/winerypics\/157.jpg","GeoLocation":{"Latitude":-360,"Longitude":-360,"Url":"http:\/\/www.wine.com\/v6\/aboutwine\/mapof.aspx?winery=157"}},"Vintage":"","Community":{"Reviews":{"HighestScore":5,"List":[],"Url":"http:\/\/www.wine.com\/V6\/Mount-Veeder-Winery-Cabernet-Sauvignon-2010\/wine\/120588\/detail.aspx?pageType=reviews"},"Url":"http:\/\/www.wine.com\/V6\/Mount-Veeder-Winery-Cabernet-Sauvignon-2010\/wine\/120588\/detail.aspx"},"Description":"","GeoLocation":{"Latitude":-360,"Longitude":-360,"Url":"http:\/\/www.wine.com\/v6\/aboutwine\/mapof.aspx?winery=157"},"PriceMax":39.9900,"PriceMin":24.9900,"PriceRetail":40.0000,"ProductAttributes":[{"Id":613,"Name":"Big &amp; Bold","Url":"http:\/\/www.wine.com\/v6\/Big-andamp-Bold\/wine\/list.aspx?N=7155+613","ImageUrl":""},{"Id":15419,"Name":"Great Bottles to Give","Url":"http:\/\/www.wine.com\/v6\/Great-Bottles-to-Give\/gift\/list.aspx?N=7151+15419","ImageUrl":"http:\/\/cache.wine.com\/images\/glo_icon_gift_big.gif"}],"Ratings":{"HighestScore":0,"List":[]},"Retail":null,"Vintages":{"List":[]}}],"Offset":0,"Total":63002,"Url":""}}';
-      echo "<textarea>$res</textarea><hr />";
-      $res = json_decode($res);
-
-      echo "<textarea>".json_encode($res->Products)."</textarea><hr />";
-
-
+    public function unfollow(){
+      $user_id = $this->session->userdata('user_id');
+      $friend_id = $this->input->post('friend_id');
+      $this->user_login_model->unfollow($user_id, $friend_id);
+    }
+    public function follow(){
+      $friend_id = $this->input->post('friend_id');
+      echo json_encode($this->user_login_model->befriend($this->session->userdata('user_id'), $friend_id));
     }
     public function index()
     {
@@ -106,6 +104,11 @@ class User extends CI_Controller {
 
     public function friendlist(){
       $friends = $this->user_login_model->all_my_friends($this->session->userdata('user_id'));
+      echo json_encode($friends);
+    }
+
+    public function followertable(){
+      $friends = $this->user_login_model->followertable($this->session->userdata('user_id'));
       echo json_encode($friends);
     }
 
@@ -251,65 +254,75 @@ class User extends CI_Controller {
       else
       {
         $data = $this->upload->data();
-        //$this->resize_image($path.$data['file_name'], 600);
-        //$thumb = $this->create_thumbnail($path.$data['file_name']);
-        // uploaddata contains an array of information about the file you just uploaded using
+        $this->load->library('image_lib');
+        $rotation = $this->input->post('rotation')? $this->input->post('rotation'): 0;
+        $rotation = 360-$rotation;
+  
+        // Original
+        $url_orig = $upath.$this->shrink_rotate($path, $data['file_name'], false, false, '_orig', $rotation);
 
-        //$uploaddata = $this->upload->data();
+        // Medium
+        $url_m = $upath.$this->shrink_rotate($path, $data['file_name'], 600, 600, '_m', $rotation);
 
-        // clear config array
-        $config = array();
+        // THumb
+        $url_t = $upath.$this->shrink_rotate($path, $data['file_name'], 50, 50, '_thumb', $rotation);
 
-        // create resized image
-        $med = $this->create_thumbnail($path.$data['file_name'], "_med");
-        echo $med;
-        $config['image_library'] = 'GD2';
-        $config['source_image'] = $path.$data['file_name'];
-        $config['new_image'] = $path.$med;
-        $config['create_thumb'] = false;
-        $config['maintain_ratio'] = true;
-        $config['width'] = 600;
-        $config['height'] = 600;
-
-        $this->load->library('image_lib', $config);
-        if(!$this->image_lib->resize()){
-          echo json_encode(array('success' =>  false, "error:" => $this->image_lib->display_errors()));
-          return;
-        }
-
-        $this->image_lib->clear();
-
-        $config = array();
-        $thumb = $this->create_thumbnail($path.$data['file_name'], "_thumb");
-        // create thumb
-        $config['image_library'] = 'GD2';
-        $config['source_image'] = $path.$data['file_name'];
-        $config['new_image'] = $path.$thumb;
-        $config['create_thumb'] = true;
-        $config['maintain_ratio'] = true;
-        $config['width'] = 150;
-        $config['height'] = 50;
-
-        $this->image_lib->initialize($config);
-        if(!$this->image_lib->resize()){
-          echo json_encode(array('success' =>  false, "error:" => $this->image_lib->display_errors()));
-          return;
-        }
         if($type == 'profile'){
-          $url = $upath.$thumb;
-          $this->user_login_model->update_user_image($this->session->userdata('user_id'), $url);
+          $this->user_login_model->update_user_image($this->session->userdata('user_id'), $url_t, $url_m, $url_orig);
         }
         else{
-          $url = $upath.$med;
-          $this->user_login_model->checkin_picture($this->session->userdata('user_id'), $checkin_id, $url);
+          $this->user_login_model->checkin_picture($this->session->userdata('user_id'), $checkin_id, $url_t, $url_m, $url_orig);
             
         }
-        echo json_encode(array("type" => $type, 'success' =>  true, "image_url" => $url));
+        echo json_encode(array("type" => $type, 'success' =>  true, "image_url" => $url_orig, 'rotation'=>$rotation));
       }
       
 
     }
+    private function shrink_rotate($path, $name, $height, $width, $identifier, $rotation){
+        // clear config array
+        $config = array();
+        $new_name = $name;
+        if($rotation == 360)
+          $rotation = 0;
+        if($height || $width || $identifier){
+          // create resized image
+          $new_name = $this->create_thumbnail($name, $identifier);
+          $config['image_library'] = 'GD2';
+          $config['source_image'] = $path.$name;
+          if($identifier)
+          {
+            $config['new_image'] = $new_name;
+            $config['create_thumb'] = false;
+            $config['maintain_ratio'] = true;
+          }
+          $config['width'] = $height;
+          $config['height'] = $width;
+          $this->image_lib->initialize($config);
+          if(!$this->image_lib->resize()){
+            die(json_encode(array('success' =>  false, "error" => "Resize_Error: ".strip_tags($this->image_lib->display_errors()))));
+          }
 
+          $this->image_lib->clear();
+        }
+          
+        if($rotation != 0 )
+        { 
+          
+          $config = array();
+          $config['image_library'] = 'GD2';
+          $config['source_image'] = $path.$new_name;
+          $config['rotation_angle'] = $rotation;
+
+          $this->image_lib->initialize($config);
+          if(!$this->image_lib->rotate()){
+            die(json_encode(array('success' =>  false, "error" => "Rotate_Error: $new_name ".strip_tags($this->image_lib->display_errors().": ".$rotation))));
+          }
+
+          $this->image_lib->clear();
+        }
+        return $new_name;
+    }
 
     private function create_thumbnail($image, $ind){
       $img = explode(".", $image);

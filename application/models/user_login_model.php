@@ -12,7 +12,14 @@ class user_login_model extends CI_Model {
         parent::__construct();
     }
 
-
+    function unfollow($user_id, $fr_id){
+        try{
+            $this->db->delete('friends', array('user'=>$user_id, 'friend'=>$fr_id));
+            return true;
+        }catch(Exception $e){
+            return false;
+        }
+    }
     function befriend($user_id, $fr_id){
         if(!$fr_id)
             return array('error'=>"Friend does not exist", 'success'=>false);
@@ -40,13 +47,14 @@ class user_login_model extends CI_Model {
         return $res->result();
 
     }
-    function update_user_image($user_id, $url){
-        $data = array("picture_url"=>$url);
+    function update_user_image($user_id, $url_t, $url_m, $url_orig){
+        $data = array("picture_url"=>$url_orig, "picture_m"=>$url_m, "picture_thumb" =>$url_t);
         $q = $this->db->update('user_profile', $data, array('id'=>$user_id), 1);
     }
     function follower_count($user_id){
         $this->db->select('*')
             ->from('friends')
+            ->distinct()
             ->where('friend', $user_id);
 
         return $this->db->count_all_results();
@@ -54,6 +62,7 @@ class user_login_model extends CI_Model {
     function following_count($user_id){
         $this->db->select('*')
             ->from('friends')
+            ->distinct()
             ->where('user', $user_id);
 
         return $this->db->count_all_results();
@@ -107,10 +116,10 @@ class user_login_model extends CI_Model {
         }
     }
 
-    function checkin_picture($user_id, $checkin_id, $url){
+    function checkin_picture($user_id, $checkin_id, $url_t, $url_m, $url_orig){
         try{
             $this->db->update('checkins',
-                                 array('picture_url'=>$url),
+                                 array("picture_url"=>$url_orig, "picture_m"=>$url_m, "picture_thumb" =>$url_t),
                                  array('checkin_id'=>$checkin_id, 'User_id'=>$user_id),
                                  1);
             return array('success'=>true);
@@ -120,8 +129,9 @@ class user_login_model extends CI_Model {
     }
     function all_my_friends($user_id){
         $this->db->where('user', $user_id);
+        $this->db->distinct();
         $this->db->from('friends');
-        $this->db->select('fname, lname, bio, picture_url, friend as user_id');
+        $this->db->select('fname, lname, bio, picture_url, picture_m, picture_thumb, friend as user_id');
         $this->db->join('user_profile', "friends.friend = user_profile.ID");
         $q = $this->db->get();
 
@@ -142,8 +152,49 @@ class user_login_model extends CI_Model {
             ->from('friends')
             ->where('user', $f->user_id);
             $f->following_count =  $this->db->count_all_results();
+
+            $friend_status = $this->db->select('*')
+            ->from('friends')
+            ->where(array('user'=>$this->session->userdata('user_id'), 'friend'=> $f->user_id));
+            $f->is_friend = $this->db->count_all_results() > 0;
         }
-        return $q->result();
+        //return $q->result();
+        return $friends;
+    }
+
+    function followertable($user_id){
+        $this->db->where('friend', $user_id);
+        $this->db->from('friends');
+        $this->db->distinct();
+        $this->db->select('fname, lname, bio, picture_url, picture_m, picture_thumb, friend as user_id');
+        $this->db->join('user_profile', "friends.user = user_profile.ID");
+        $q = $this->db->get();
+
+        $friends = $q->result();
+        foreach ($friends as $f) {
+            $this->db->select('*')
+            ->from('checkins')
+            ->where('user_id', $f->user_id);
+            $f->checkin_count =  $this->db->count_all_results();
+
+            $this->db->select('*')
+            ->from('friends')
+            ->where('friend', $f->user_id);
+            $f->follower_count =  $this->db->count_all_results();
+
+
+            $this->db->select('*')
+            ->from('friends')
+            ->where('user', $f->user_id);
+            $f->following_count =  $this->db->count_all_results();
+
+            $friend_status = $this->db->select('*')
+            ->from('friends')
+            ->where(array('user'=>$this->session->userdata('user_id'), 'friend'=> $f->user_id));
+            $f->is_friend = $this->db->count_all_results() > 0;
+        }
+        //return $q->result();
+        return $friends;
     }
 
 

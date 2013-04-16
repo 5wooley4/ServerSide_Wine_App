@@ -9,11 +9,19 @@ class search_model extends CI_Model {
         parent::__construct();
         $ctx=stream_context_create(array('http'=>array('timeout' => 2)));
     }
+    function delete_checkin($user_id, $checkin_id){
+        $this->db->delete('checkins', array('user_id'=>$user_id, 'checkin_id'=>$checkin_id));
+    }
     function wine_checkins($user_id, $wine_id){
 
-
-
-        $wc = $this->db->select(Array('checkins.wine_id', 'friend', 'comment', 'rating', 'date', 'picture_url as wine_pic'))
+        $wc = $this->db->select(Array(
+            'checkins.wine_id','checkins.checkin_id',
+            'friend', 'comment',
+            'rating',
+            'date',
+            'picture_url as wine_pic',
+            'picture_m as wine_pic_m',
+            'picture_thumb as wine_pic_thumb'))
             ->distinct()
             ->from('checkins')
             ->join('friends', "friends.friend = checkins.user_id")
@@ -29,10 +37,12 @@ class search_model extends CI_Model {
 
     function friends_wines($user_id){
         $recent_checkins = $this->db
-            ->select(Array('checkins.wine_id', 'friend', 'comment', 'rating', 'picture_url'))
+            ->select(Array('checkins.wine_id', 'friend', 'comment', 'rating', 'picture_url', 'picture_m', 'picture_thumb'))
+            ->distinct()
             ->from('checkins')
             ->join('friends', "friends.friend = checkins.user_id")
             ->where("friends.user", $user_id)
+            ->or_where("checkins.user_id", $user_id)
             ->order_by('Date', 'DESC')  
             ->get();
         $res = Array();
@@ -41,10 +51,54 @@ class search_model extends CI_Model {
             $w->friend = $this->user_profile_by_id($r->friend);
             $w->friend->rating = $r->rating;
             $w->friend->comment = $r->comment;
-            $w->friend->user_wine_url = $r->picture_url;
+            $w->friend->user_wine_url = strlen($r->picture_m)>0?$r->picture_m:$r->picture_url;
             $res[] = $w;
         }
         return  $res;
+    }
+    function search_users($search){
+        $search = $this->db->escape($search);
+        if(strlen($search) > 2){
+            try{
+                $query = $this->db->select('fname, lname, bio, picture_url, picture_m, picture_thumb, ID as user_id')
+                    ->from('user_profile')
+                    ->where('MATCH(email, fname, lname) AGAINST('.$search.')')
+                    ->get();
+                if($query){
+                    //echo $this->db->last_query();
+                    $friends = $query->result();
+                    foreach ($friends as $f) {
+                        $this->db->select('*')
+                        ->from('checkins')
+                        ->where('user_id', $f->user_id);
+                        $f->checkin_count =  $this->db->count_all_results();
+
+                        $this->db->select('*')
+                        ->from('friends')
+                        ->where('friend', $f->user_id);
+                        $f->follower_count =  $this->db->count_all_results();
+
+
+                        $this->db->select('*')
+                        ->from('friends')
+                        ->where('user', $f->user_id);
+                        $f->following_count =  $this->db->count_all_results();
+
+                        $friend_status = $this->db->select('*')
+                        ->from('friends')
+                        ->where(array('user'=>$this->session->userdata('user_id'), 'friend'=> $f->user_id));
+                        $f->is_friend = $this->db->count_all_results() > 0;
+                        //echo $this->db->last_query();
+                    }
+                    return $friends;
+                }
+                else
+                    return array('success'=>false, 'error'=>"No matches");
+            }catch(Exception $e){
+                die(json_encode(array('success'=>false, 'error'=>"No matches")));
+            }
+        }
+
     }
     function recent_wines($user_id){
         //echo $user_id."<br >";

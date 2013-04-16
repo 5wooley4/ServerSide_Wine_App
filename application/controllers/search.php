@@ -13,7 +13,18 @@ class Search extends CI_Controller {
         $this->load->model('user_login_model');
         
     }
-
+    public function delete_checkin(){
+      $user_id = $this->session->userdata('user_id');
+      $this->search_model->delete_checkin($user_id, $this->input->post('checkin_id'));
+      echo json_encode(array('success'=>true));
+    }
+    public function user_search(){
+      $search = $this->input->post('search');
+      if($search)
+        echo json_encode($this->search_model->search_users($search));
+      else
+        echo "<form method='post'><input name='search' /><br /><input type='submit' /></form>";
+    }
     public function wine_checkins(){
       $wine_id = $this->input->post('wine_id');
       if(strlen($wine_id) < 1){
